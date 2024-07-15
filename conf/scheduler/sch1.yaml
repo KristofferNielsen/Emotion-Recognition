@@ -1,0 +1,4 @@
+sched: "reduce"
+factor: 0.5
+patience: 4
+name: "sch1"

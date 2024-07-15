@@ -1,0 +1,7 @@
+defaults:
+    - data: data1
+    - experiments: exp1
+    - collect: col1
+    - model_name: mod1
+    - drop: drop1
+    - sam: sam1

@@ -1,0 +1,4 @@
+sched: "exp"
+factor: 0.5
+patience: 30
+name: "sch3"

@@ -1,0 +1,20 @@
+data:
+  data_path_raw: data/raw
+  data_path_processed: data/processed/cats.pt
+  channels: 3
+  xy_dim: 128
+experiments:
+  seed: 42
+  batch_size: 64
+  lr: 0.01
+  max_epochs: 50
+  h_dim: 1024
+  z_dim: 32
+collect:
+  dataset: "iemocap"
+model_name:
+  model_name: "att"
+drop:
+  dropout: 0.2
+sam:
+  samples: 5

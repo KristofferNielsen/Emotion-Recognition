@@ -1,0 +1,7 @@
+seed: 24
+num_classes: 4
+batch_size: 32
+lr: 0.001
+max_epochs: 100
+h_dim: 256
+name: "exp3"

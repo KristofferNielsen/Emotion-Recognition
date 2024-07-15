@@ -1,0 +1,4 @@
+sched: "ann"
+factor: 0.5
+patience: 200
+name: "sch5"

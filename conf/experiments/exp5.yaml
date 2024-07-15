@@ -1,0 +1,7 @@
+seed: 24
+num_classes: 4
+batch_size: 32
+lr: 0.0001
+max_epochs: 100
+h_dim: 128
+name: "exp5"
