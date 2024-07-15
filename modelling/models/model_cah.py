@@ -43,38 +43,9 @@ class MLPEncoder(nn.Module):
 
         return y_3
 
-class LSTMEncoder(nn.Module):
-    '''
-    The LSTM-based subnetwork that is used in TFN for text
-    '''
-
-    def __init__(self, in_size, hidden_size, dropout, num_layers=1, bidirectional=False):
-
-        super(LSTMEncoder, self).__init__()
-
-        if num_layers == 1:
-            rnn_dropout = 0.0
-        else:
-            rnn_dropout = dropout
-
-        self.rnn = nn.LSTM(in_size, hidden_size, num_layers=num_layers, dropout=rnn_dropout, bidirectional=bidirectional, batch_first=True)
-        self.dropout = nn.Dropout(dropout)
-        self.linear_1 = nn.Linear(hidden_size, hidden_size)
-
-    def forward(self, x):
-        '''
-        Args:
-            x: tensor of shape (batch_size, sequence_len, in_size)
-            因为用的是 final_states ，所以特征的 padding 是放在前面的
-        '''
-        _, final_states = self.rnn(x)
-        h = self.dropout(final_states[0].squeeze(0))
-        y_1 = self.linear_1(h)
-        return y_1
-
-class ModelCross1dpre(nn.Module):
+class ModelCAH(nn.Module):
     def __init__(self, input_sizes, output_size,nhead, num_classes, dropout_prob,multi,type,a,t,v):
-        super(ModelCross1dpre, self).__init__()
+        super(ModelCAH, self).__init__()
         self.a = a
         self.t = t
         self.v = v
@@ -84,15 +55,18 @@ class ModelCross1dpre(nn.Module):
         output_dim1 = num_classes
         output_dim2 = 1
         dropout = dropout_prob
-        hidden_dim = 768
-
-        self.mult_at=nn.MultiheadAttention(hidden_dim, nhead, dropout=dropout, batch_first=True)
-        self.mult_ta=nn.MultiheadAttention(hidden_dim, nhead, dropout=dropout, batch_first=True)
-        self.mult_va=nn.MultiheadAttention(hidden_dim, nhead, dropout=dropout, batch_first=True)
-        self.mult_av=nn.MultiheadAttention(hidden_dim, nhead, dropout=dropout, batch_first=True)
-        self.mult_tv=nn.MultiheadAttention(hidden_dim, nhead, dropout=dropout, batch_first=True)
-        self.mult_vt=nn.MultiheadAttention(hidden_dim, nhead, dropout=dropout, batch_first=True)
-
+        hidden_dim = output_size
+        
+        self.audio_encoder = MLPEncoder(audio_dim, hidden_dim, dropout)
+        self.text_encoder  = MLPEncoder(text_dim,  hidden_dim, dropout)
+        self.video_encoder = MLPEncoder(video_dim, hidden_dim, dropout)
+        
+        self.mult_at=Seq(hidden_dim, hidden_dim,nhead, dropout_prob=dropout)
+        self.mult_ta=Seq(hidden_dim, hidden_dim,nhead, dropout_prob=dropout)
+        self.mult_va=Seq(hidden_dim, hidden_dim,nhead, dropout_prob=dropout)
+        self.mult_av=Seq(hidden_dim,hidden_dim, nhead, dropout_prob=dropout)
+        self.mult_tv=Seq(hidden_dim,hidden_dim, nhead, dropout_prob=dropout)
+        self.mult_vt=Seq(hidden_dim,hidden_dim, nhead, dropout_prob=dropout)
 
         self.dense = nn.Linear(hidden_dim, hidden_dim)
         self.activation_fn = nn.ReLU()
@@ -111,16 +85,25 @@ class ModelCross1dpre(nn.Module):
         '''
         hidden = []
         count = 0
+        if self.a:
+            audio_hidden = self.audio_encoder(mods[count]).unsqueeze(1) # [32, 128]
+            hidden.append(audio_hidden)
+            count +=1
+        if self.t:
+            text_hidden  = self.text_encoder(mods[count]).unsqueeze(1)  # [32, 128]
+            hidden.append(text_hidden)
+            count+=1
+        if self.v:
+            video_hidden = self.video_encoder(mods[count]).unsqueeze(1) # [32, 128]
+            hidden.append(video_hidden)
+            count+=1
         
-        hidden.append(mods[0])
-        hidden.append(mods[1])
-        hidden.append(mods[2])
-        at = self.mult_at(hidden[0], hidden[1],hidden[1])[0].squeeze(1)
-        ta = self.mult_ta(hidden[1], hidden[0],hidden[0])[0].squeeze(1)
-        va = self.mult_va(hidden[2], hidden[0],hidden[0])[0].squeeze(1)
-        av = self.mult_av(hidden[0], hidden[2],hidden[2])[0].squeeze(1)
-        tv = self.mult_tv(hidden[1], hidden[2],hidden[2])[0].squeeze(1)
-        vt = self.mult_vt(hidden[2], hidden[1],hidden[1])[0].squeeze(1)
+        at = self.mult_at(hidden[0], hidden[1]).squeeze(1)
+        ta = self.mult_ta(hidden[1], hidden[0]).squeeze(1)
+        va = self.mult_va(hidden[2], hidden[0]).squeeze(1)
+        av = self.mult_av(hidden[0], hidden[2]).squeeze(1)
+        tv = self.mult_tv(hidden[1], hidden[2]).squeeze(1)
+        vt = self.mult_vt(hidden[2], hidden[1]).squeeze(1)
 
         a = at*av
         t = ta*tv
@@ -137,4 +120,4 @@ class ModelCross1dpre(nn.Module):
             x2  = self.fc_out_2(x)
             return x1, x2
         else:
-            return x1,a1,t1,v1
+            return x1

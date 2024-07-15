@@ -41,35 +41,6 @@ class MLPEncoder(nn.Module):
 
         return y_3
 
-class LSTMEncoder(nn.Module):
-    '''
-    The LSTM-based subnetwork that is used in TFN for text
-    '''
-
-    def __init__(self, in_size, hidden_size, dropout, num_layers=1, bidirectional=False):
-
-        super(LSTMEncoder, self).__init__()
-
-        if num_layers == 1:
-            rnn_dropout = 0.0
-        else:
-            rnn_dropout = dropout
-
-        self.rnn = nn.LSTM(in_size, hidden_size, num_layers=num_layers, dropout=rnn_dropout, bidirectional=bidirectional, batch_first=True)
-        self.dropout = nn.Dropout(dropout)
-        self.linear_1 = nn.Linear(hidden_size, hidden_size)
-
-    def forward(self, x):
-        '''
-        Args:
-            x: tensor of shape (batch_size, sequence_len, in_size)
-            因为用的是 final_states ，所以特征的 padding 是放在前面的
-        '''
-        _, final_states = self.rnn(x)
-        h = self.dropout(final_states[0].squeeze(0))
-        y_1 = self.linear_1(h)
-        return y_1
-
 class Attention(nn.Module):
     def __init__(self, input_sizes, output_size, num_classes, dropout_prob,multi,type,a,t,v):
         super(Attention, self).__init__()

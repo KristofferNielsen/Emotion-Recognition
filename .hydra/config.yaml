@@ -1,8 +1,7 @@
 data:
-  data_path_raw: data/raw
-  data_path_processed: data/processed/cats.pt
-  channels: 3
-  xy_dim: 128
+  a: True
+  t: True
+  v: True
 experiments:
   seed: 42
   batch_size: 64

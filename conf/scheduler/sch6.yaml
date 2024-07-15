@@ -1,4 +1,0 @@
-sched: "ann"
-factor: 0.5
-patience: 80
-name: "sch6"

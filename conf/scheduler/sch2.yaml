@@ -1,4 +1,0 @@
-sched: "reduce"
-factor: 0.3
-patience: 10
-name: "sch2"
